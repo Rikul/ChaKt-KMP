@@ -105,6 +105,7 @@ android {
                 .toInt()
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
         resources {
@@ -122,6 +123,11 @@ android {
     }
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
+        debugImplementation(libs.compose.ui.test.manifest)
+
+        androidTestImplementation(libs.androidx.test.junit)
+        androidTestImplementation(libs.androidx.espresso.core)
+        androidTestImplementation(libs.compose.ui.test.junit4)
     }
     lint {
         quiet = true

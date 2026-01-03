@@ -49,7 +49,7 @@ class GenerativeAiService private constructor(
         val instance: GenerativeAiService by lazy {
             GenerativeAiService(
                 visionModel = GenerativeModel(
-                    modelName = "gemini-2.0-flash",
+                    modelName = "gemini-2.5-flash",
                     apiKey = GEMINI_API_KEY,
                 ),
             )
