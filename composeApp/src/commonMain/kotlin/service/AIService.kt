@@ -24,35 +24,17 @@
 package service
 
 import dev.shreyaspatil.ai.client.generativeai.Chat
-import dev.shreyaspatil.ai.client.generativeai.GenerativeModel
 import dev.shreyaspatil.ai.client.generativeai.type.Content
-import dev.shreyaspatil.chakt.BuildKonfig
 
 /**
- * Service for Generative AI operations that can interact with text as well as images.
+ * Interface for AI service operations.
+ * This abstraction allows for dependency injection and testing with mock implementations.
  */
-class GenerativeAiService private constructor(
-    private val visionModel: GenerativeModel,
-) : AIService {
-
+interface AIService {
     /**
      * Creates a chat instance which internally tracks the ongoing conversation with the model
      *
      * @param history History of conversation
      */
-    override fun startChat(history: List<Content>): Chat = visionModel.startChat(history)
-
-    companion object {
-        @Suppress("ktlint:standard:property-naming")
-        var GEMINI_API_KEY = BuildKonfig.GEMINI_API_KEY
-
-        val instance: GenerativeAiService by lazy {
-            GenerativeAiService(
-                visionModel = GenerativeModel(
-                    modelName = "gemini-2.5-flash",
-                    apiKey = GEMINI_API_KEY,
-                ),
-            )
-        }
-    }
+    fun startChat(history: List<Content>): Chat
 }

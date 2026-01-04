@@ -33,10 +33,10 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import service.GenerativeAiService
+import service.AIService
 import util.toComposeImageBitmap
 
-class ChatViewModel(aiService: GenerativeAiService) {
+class ChatViewModel(aiService: AIService) {
     private val coroutineScope = MainScope()
 
     private val chat = aiService.startChat(

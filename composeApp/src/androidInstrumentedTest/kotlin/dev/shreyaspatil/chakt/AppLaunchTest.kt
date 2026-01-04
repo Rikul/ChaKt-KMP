@@ -27,22 +27,33 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import service.GenerativeAiService
 
+/**
+ * Instrumented test for app launch and API key dialog.
+ *
+ * Note: These tests run offline. The GenerativeAiService is not actually initialized
+ * in this test, as we only verify the UI behavior of the API key dialog.
+ */
 @RunWith(AndroidJUnit4::class)
 class AppLaunchTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
+    @Before
+    fun setUp() {
+        // Clear the API key to ensure tests run in offline mode
+        // This prevents any actual API initialization during tests
+        GenerativeAiService.GEMINI_API_KEY = ""
+    }
+
     @Test
     fun appLaunchesAndShowsApiKeyDialog() {
-        // Clear the API key to ensure the dialog is shown
-        GenerativeAiService.GEMINI_API_KEY = ""
-
-        // Verify that the API key dialog is displayed
+        // Verify that the API key dialog is displayed when no API key is set
         composeTestRule
             .onNodeWithText("Set Gemini API key to enter Chat")
             .assertIsDisplayed()
