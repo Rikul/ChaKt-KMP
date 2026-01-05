@@ -22,5 +22,13 @@
  * SOFTWARE.
  */
 import androidx.compose.ui.window.ComposeUIViewController
+import dev.shreyaspatil.chakt.db.ChaKtDb
+import dev.shreyaspatil.chakt.db.DriverFactory
+import repo.PreferenceRepository
 
-fun MainViewController() = ComposeUIViewController { App() }
+fun MainViewController() = ComposeUIViewController {
+    val driver = DriverFactory().createDriver()
+    val db = ChaKtDb(driver)
+    val repository = PreferenceRepository(db)
+    App(repository)
+}

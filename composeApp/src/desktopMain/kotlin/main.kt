@@ -21,19 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import dev.shreyaspatil.chakt.db.ChaKtDb
+import dev.shreyaspatil.chakt.db.DriverFactory
+import repo.PreferenceRepository
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication, title = "ChaKt-KMP") {
-        App()
-    }
-}
+    val driver = DriverFactory().createDriver()
+    val db = ChaKtDb(driver)
+    val repository = PreferenceRepository(db)
 
-@Preview
-@Composable
-fun AppDesktopPreview() {
-    App()
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "ChaKt",
+    ) {
+        App(repository)
+    }
 }

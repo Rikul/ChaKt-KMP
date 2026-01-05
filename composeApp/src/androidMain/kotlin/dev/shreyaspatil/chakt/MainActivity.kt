@@ -27,22 +27,22 @@ import App
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import dev.shreyaspatil.chakt.db.ChaKtDb
+import dev.shreyaspatil.chakt.db.DriverFactory
+import repo.PreferenceRepository
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val driver = DriverFactory(applicationContext).createDriver()
+        val db = ChaKtDb(driver)
+        val repository = PreferenceRepository(db)
+
         window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
         setContent {
-            App()
+            App(repository)
         }
     }
-}
-
-@Preview
-@Composable
-fun AppAndroidPreview() {
-    App()
 }

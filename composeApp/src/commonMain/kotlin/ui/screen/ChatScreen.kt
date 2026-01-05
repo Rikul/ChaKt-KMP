@@ -32,47 +32,82 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import service.GenerativeAiService
 import ui.component.ChatBubbleItem
 import ui.component.MessageInput
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    chatViewModel: ChatViewModel = remember { ChatViewModel(GenerativeAiService.instance) },
+    chatViewModel: ChatViewModel,
+    onPreferencesClick: () -> Unit,
 ) {
     val chatUiState = chatViewModel.uiState
 
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showClearConfirmDialog by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("ChaKt") },
                 navigationIcon = {
-                    Icon(Icons.Default.AutoAwesome, "ChaKt", modifier = Modifier.padding(4.dp))
+                    Icon(Icons.Default.AutoAwesome, "ChaKt", modifier = Modifier.padding(16.dp))
+                },
+                actions = {
+                    IconButton(onClick = { showClearConfirmDialog = true }) {
+                        Icon(Icons.Default.Add, "New Chat")
+                    }
+                    IconButton(onClick = {
+                        val text = chatViewModel.getConversationText()
+                        clipboardManager.setText(AnnotatedString(text))
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("Copied to clipboard")
+                        }
+                    }) {
+                        Icon(Icons.Default.ContentCopy, "Copy")
+                    }
+                    IconButton(onClick = onPreferencesClick) {
+                        Icon(Icons.Default.Settings, "Preferences")
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
             )
         },
@@ -99,6 +134,23 @@ fun ChatScreen(
                 listState = listState,
             )
         }
+    }
+
+    if (showClearConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirmDialog = false },
+            title = { Text("Start a new conversation?") },
+            text = { Text("This will discard the current conversation.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    chatViewModel.resetConversation()
+                    showClearConfirmDialog = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirmDialog = false }) { Text("Cancel") }
+            },
+        )
     }
 
     DisposableEffect(Unit) {

@@ -50,6 +50,10 @@ class MutableChatUiState : ChatUiState {
         messages.add(message)
     }
 
+    fun clearMessages() {
+        messages.clear()
+    }
+
     fun setLastModelMessageAsLoaded(text: String) {
         updateLastModelMessage { ModelChatMessage.LoadedModelMessage(text) }
     }

@@ -42,7 +42,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,29 +56,81 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import repo.PreferenceRepository
 import service.GenerativeAiService
 import ui.screen.ChatScreen
+import ui.screen.ChatViewModel
+import ui.screen.PreferencesScreen
 import util.isValidApiKey
 import util.rememberClipboardManager
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import kotlinx.coroutines.flow.map
+import androidx.compose.ui.Alignment
+
+enum class Screen { Chat, Preferences }
+
+private sealed interface ApiKeyState {
+    data object Loading : ApiKeyState
+    data class Loaded(val key: String?) : ApiKeyState
+}
 
 /**
  * Entry point of application
  */
 @Composable
-fun App() {
+fun App(repository: PreferenceRepository) {
     MaterialTheme {
-        var isAiServiceInitialized by remember { mutableStateOf(GenerativeAiService.GEMINI_API_KEY.isNotBlank()) }
+        val apiKeyState by remember(repository) {
+            repository.apiKey.map { ApiKeyState.Loaded(it) }
+        }.collectAsState(initial = ApiKeyState.Loading)
 
-        if (isAiServiceInitialized) {
-            ChatScreen()
-        } else {
-            SetApiKeyDialog(onAiServiceInitialized = { isAiServiceInitialized = true })
+        val model by repository.model.collectAsState("gemini-2.5-flash")
+
+        var currentScreen by remember { mutableStateOf(Screen.Chat) }
+
+        when (val state = apiKeyState) {
+            ApiKeyState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is ApiKeyState.Loaded -> {
+                val apiKey = state.key
+                if (apiKey.isNullOrBlank()) {
+                    SetApiKeyDialog(repository)
+                } else {
+                    // Re-create ViewModel when key or model changes
+                    key(apiKey, model) {
+                        val chatViewModel = remember {
+                            ChatViewModel(GenerativeAiService(apiKey, model))
+                        }
+
+                        when (currentScreen) {
+                            Screen.Chat -> ChatScreen(
+                                chatViewModel = chatViewModel,
+                                onPreferencesClick = { currentScreen = Screen.Preferences },
+                            )
+
+                            Screen.Preferences -> PreferencesScreen(
+                                repository = repository,
+                                onBack = { currentScreen = Screen.Chat },
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun SetApiKeyDialog(onAiServiceInitialized: () -> Unit) {
+fun SetApiKeyDialog(repository: PreferenceRepository) {
     var apiKey by rememberSaveable { mutableStateOf("") }
     var isValidApiKey by remember { mutableStateOf(false) }
     var isApiValidFromKeyboard by remember { mutableStateOf(true) }
@@ -102,11 +156,12 @@ fun SetApiKeyDialog(onAiServiceInitialized: () -> Unit) {
                         IconButton(
                             enabled = isValidApiKey,
                             onClick = {
-                                GenerativeAiService.GEMINI_API_KEY = apiKey
-                                onAiServiceInitialized()
+                                coroutineScope.launch {
+                                    repository.saveApiKey(apiKey)
+                                }
                             },
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Login, "Key icon")
+                            Icon(Icons.AutoMirrored.Filled.Login, "Save API Key")
                         }
                     },
                     isError = !isValidApiKey,
