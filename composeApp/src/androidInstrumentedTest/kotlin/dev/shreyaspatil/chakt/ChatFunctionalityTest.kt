@@ -94,4 +94,114 @@ class ChatFunctionalityTest {
         ).assertExists()
     }
 
+    
+    @Test
+    fun chatScreen_displaysNewConversationIcon() {
+        // Arrange
+        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
+        val viewModel = ChatViewModel(mockService)
+
+        // Act
+        composeTestRule.setContent {
+            ChatScreen(
+                chatViewModel = viewModel,
+                onPreferencesClick = {},
+            )
+        }
+
+        // Tap New Chat
+        composeTestRule.onNodeWithContentDescription("New Chat").performClick()
+
+        // Assert: Confirmation dialog is shown
+        composeTestRule.onNodeWithText("Start a new conversation?").assertExists()
+        
+        // Assert: Can dismiss/confirm
+        composeTestRule.onNodeWithText("OK").performClick()
+        
+        // Assert: Dialog is gone
+        composeTestRule.onNodeWithText("Start a new conversation?").assertDoesNotExist()
+    }
+
+    @Test
+    fun chatScreen_displaysCopyIcon() {
+        // Arrange
+        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
+        val viewModel = ChatViewModel(mockService)
+
+        // Act
+        composeTestRule.setContent {
+            ChatScreen(
+                chatViewModel = viewModel,
+                onPreferencesClick = {},
+            )
+        }
+
+        // Send a message so we have something to copy
+        val testMessage = "Hello, Copy Check!"
+        composeTestRule.onNodeWithText("Talk to AI...").performTextInput(testMessage)
+        composeTestRule.onNodeWithContentDescription("Send message").performClick()
+
+        // Wait for response
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText(TestResponses.GREETING_RESPONSE, substring = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Tap Copy
+        composeTestRule.onNodeWithContentDescription("Copy").performClick()
+
+        // Assert: Verify "Copied to clipboard" snackbar is shown
+        composeTestRule.onNodeWithText("Copied to clipboard").assertExists()
+
+        // Assert: Verify clipboard content matches conversation
+        // We run on the main thread to access ClipboardManager safely
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val clipboard = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+                .getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            val clipData = clipboard.primaryClip
+            val text = clipData?.getItemAt(0)?.text?.toString()
+            
+            // Expected format depends on how ChatViewModel formats conversation.
+            // Usually "User: <msg>\nModel: <msg>" or similar.
+            // We just check if it contains our message and response.
+            assert(text != null)
+            assert(text!!.contains(testMessage))
+            assert(text.contains(TestResponses.GREETING_RESPONSE))
+        }
+    }
+
+    @Test
+    fun chatScreen_copiesConversationToClipboard() {
+        // Arrange
+        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
+        val viewModel = ChatViewModel(mockService)
+
+        // Act
+        composeTestRule.setContent {
+            ChatScreen(
+                chatViewModel = viewModel,
+                onPreferencesClick = {},
+            )
+        }
+
+        // Send a message to have some conversation content
+        val testMessage = "Hello, Copy Test!"
+        composeTestRule.onNodeWithText("Talk to AI...").performTextInput(testMessage)
+        composeTestRule.onNodeWithContentDescription("Send message").performClick()
+        
+        // Wait for response roughly
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText(TestResponses.GREETING_RESPONSE, substring = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Tap Copy
+        composeTestRule.onNodeWithContentDescription("Copy").performClick()
+
+        // Assert: Verify "Copied to clipboard" snackbar is shown
+        // Note: Verifying actual clipboard content in instrumented tests often requires
+        // additional orchestration or UI Automator. Checking the Snackbar confirms the
+        // app *attempted* to copy.
+        composeTestRule.onNodeWithText("Copied to clipboard").assertExists()
+    }
 }
