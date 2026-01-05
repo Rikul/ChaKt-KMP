@@ -11,6 +11,15 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildkonfig)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.sqldelight)
+}
+
+sqldelight {
+    databases {
+        create("ChaKtDb") {
+            packageName.set("dev.shreyaspatil.chakt.db")
+        }
+    }
 }
 
 kotlin {
@@ -58,6 +67,7 @@ kotlin {
             implementation(compose.ui)
             @OptIn(ExperimentalComposeLibrary::class)
             implementation(compose.components.resources)
+            implementation(libs.sqldelight.coroutines.extensions)
 
             // GenAI SDK
             implementation(libs.generativeai.google)
@@ -68,16 +78,24 @@ kotlin {
 
             // File picker
             implementation(libs.calf.filepicker)
+            implementation(libs.sqldelight.android.driver)
         }
         iosMain.dependencies {
             // File picker
             implementation(libs.calf.filepicker)
+            implementation(libs.sqldelight.native.driver)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
 
             // File picker
             implementation(libs.calf.filepicker)
+            implementation(libs.sqldelight.sqlite.driver)
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(libs.sqldelight.web.worker.driver)
+            }
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
