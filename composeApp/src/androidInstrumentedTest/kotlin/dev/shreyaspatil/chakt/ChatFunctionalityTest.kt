@@ -51,9 +51,7 @@ class ChatFunctionalityTest {
 
     @Before
     fun setUp() {
-        // Set a fake API key to bypass the API key setup screen
-        // This prevents the app from showing the setup dialog during tests
-        GenerativeAiService.GEMINI_API_KEY = "fake-api-key-for-testing"
+        // No setup needed, using MockAIService
     }
 
     @Test
@@ -64,7 +62,10 @@ class ChatFunctionalityTest {
 
         // Act: Set up the chat screen
         composeTestRule.setContent {
-            ChatScreen(chatViewModel = viewModel)
+            ChatScreen(
+                chatViewModel = viewModel,
+                onPreferencesClick = {},
+            )
         }
 
         // Wait for initial messages to load

@@ -32,6 +32,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import service.GenerativeAiService
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.core.app.ApplicationProvider
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import dev.shreyaspatil.chakt.db.ChaKtDb
+import repo.PreferenceRepository
+import App
 
 /**
  * Instrumented test for app launch and API key dialog.
@@ -42,17 +48,27 @@ import service.GenerativeAiService
 @RunWith(AndroidJUnit4::class)
 class AppLaunchTest {
     @get:Rule
-    val composeTestRule = createAndroidComposeRule<MainActivity>()
-
-    @Before
-    fun setUp() {
-        // Clear the API key to ensure tests run in offline mode
-        // This prevents any actual API initialization during tests
-        GenerativeAiService.GEMINI_API_KEY = ""
-    }
+    val composeTestRule = createComposeRule()
 
     @Test
-    fun appLaunchesAndShowsApiKeyDialog() {
+    fun appLaunchesAndShowsApiKeyDialog() = kotlinx.coroutines.runBlocking {
+        // Create an in-memory database for testing
+        val driver = AndroidSqliteDriver(
+            schema = ChaKtDb.Schema,
+            context = ApplicationProvider.getApplicationContext(),
+            name = null // In-memory database
+        )
+        val db = ChaKtDb(driver)
+        val repository = PreferenceRepository(db)
+
+        // Ensure key is cleared
+        repository.saveApiKey("")
+
+        // Act
+        composeTestRule.setContent {
+            App(repository)
+        }
+
         // Verify that the API key dialog is displayed when no API key is set
         composeTestRule
             .onNodeWithText("Set Gemini API key to enter Chat")
