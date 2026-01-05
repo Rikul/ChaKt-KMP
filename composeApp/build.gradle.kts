@@ -79,6 +79,9 @@ kotlin {
             // File picker
             implementation(libs.calf.filepicker)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
     }
 }
 
