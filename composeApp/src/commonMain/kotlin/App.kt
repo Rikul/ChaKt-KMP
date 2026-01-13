@@ -29,6 +29,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.ContentPasteGo
@@ -144,6 +151,39 @@ fun SetApiKeyDialog(repository: PreferenceRepository) {
                 modifier = Modifier.padding(16.dp),
             ) {
                 Text("Set Gemini API key to enter Chat")
+                
+                val uriHandler = LocalUriHandler.current
+                val annotatedLinkString = buildAnnotatedString {
+                    append("Get your API key from ")
+                    pushStringAnnotation(
+                        tag = "URL",
+                        annotation = "https://aistudio.google.com/app/apikey"
+                    )
+                    withStyle(
+                        style = SpanStyle(
+                            color = MaterialTheme.colorScheme.primary,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ) {
+                        append("aistudio.google.com/app/apikey")
+                    }
+                    pop()
+                }
+                
+                ClickableText(
+                    text = annotatedLinkString,
+                    onClick = { offset ->
+                        annotatedLinkString.getStringAnnotations(
+                            tag = "URL",
+                            start = offset,
+                            end = offset
+                        ).firstOrNull()?.let { annotation ->
+                            uriHandler.openUri(annotation.item)
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
                 OutlinedTextField(
                     value = apiKey,
                     onValueChange = {

@@ -105,15 +105,6 @@ fun MessageInput(
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
                     ),
-                    leadingIcon = if (selectedImageBitmap == null) {
-                        {
-                            IconButton(onClick = { showImagePicker = true }) {
-                                Icon(Icons.Rounded.AttachFile, "Attach Image File")
-                            }
-                        }
-                    } else {
-                        null
-                    },
                     trailingIcon = {
                         IconButton(
                             enabled = enabled,
