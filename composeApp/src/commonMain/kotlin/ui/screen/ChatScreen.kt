@@ -24,9 +24,16 @@
 package ui.screen
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -112,15 +119,21 @@ fun ChatScreen(
             )
         },
         bottomBar = {
-            MessageInput(
-                enabled = chatUiState.canSendMessage,
-                onSendMessage = { inputText, image ->
-                    chatViewModel.sendMessage(inputText, image)
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(0)
-                    }
-                },
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars)),
+            ) {
+                MessageInput(
+                    enabled = chatUiState.canSendMessage,
+                    onSendMessage = { inputText, image ->
+                        chatViewModel.sendMessage(inputText, image)
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(0)
+                        }
+                    },
+                )
+            }
         },
     ) { paddingValues ->
         Column(
