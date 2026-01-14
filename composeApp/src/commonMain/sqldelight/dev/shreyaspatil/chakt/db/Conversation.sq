@@ -1,0 +1,18 @@
+CREATE TABLE Conversation (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    messages TEXT NOT NULL,
+    createdAt INTEGER NOT NULL
+);
+
+getAllConversations:
+SELECT * FROM Conversation ORDER BY createdAt DESC;
+
+getConversationById:
+SELECT * FROM Conversation WHERE id = ?;
+
+insertConversation:
+INSERT OR REPLACE INTO Conversation(id, name, messages, createdAt) VALUES (?, ?, ?, ?);
+
+deleteConversation:
+DELETE FROM Conversation WHERE id = ?;

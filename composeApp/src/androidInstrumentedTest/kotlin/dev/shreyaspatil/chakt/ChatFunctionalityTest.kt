@@ -32,6 +32,13 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.shreyaspatil.chakt.fixtures.TestResponses
 import dev.shreyaspatil.chakt.mock.MockAIService
+import androidx.test.core.app.ApplicationProvider
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import dev.shreyaspatil.chakt.db.ChaKtDb
+import kotlinx.coroutines.runBlocking
+import repo.ConversationRepository
+import repo.PreferenceRepository
+import service.AiServiceFactory
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,24 +56,40 @@ class ChatFunctionalityTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private lateinit var viewModel: ChatViewModel
+    private lateinit var preferenceRepository: PreferenceRepository
+
     @Before
     fun setUp() {
-        // No setup needed, using MockAIService
+        val driver = AndroidSqliteDriver(
+            schema = ChaKtDb.Schema,
+            context = ApplicationProvider.getApplicationContext(),
+            name = null
+        )
+        val db = ChaKtDb(driver)
+        preferenceRepository = PreferenceRepository(db)
+        val conversationRepository = ConversationRepository(db)
+        
+        runBlocking {
+             preferenceRepository.saveApiKey("test-api-key")
+        }
+
+        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
+        val aiServiceFactory = AiServiceFactory { _, _ -> mockService }
+        viewModel = ChatViewModel(preferenceRepository, conversationRepository, aiServiceFactory)
     }
 
     @Test
     fun chatScreen_sendsMessage_displaysResponse() {
-        // Arrange: Create a mock AI service with success response mode
-        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
-        val viewModel = ChatViewModel(mockService)
-
-        // Act: Set up the chat screen
-        composeTestRule.setContent {
-            ChatScreen(
-                chatViewModel = viewModel,
-                onPreferencesClick = {},
-            )
-        }
+        runBlocking {
+            // Act: Set up the chat screen
+            composeTestRule.setContent {
+                ChatScreen(
+                    chatViewModel = viewModel,
+                    onPreferencesClick = {},
+                    onOpenConversationsClick = {},
+                )
+            }
 
         // Wait for initial messages to load
         composeTestRule.waitForIdle()
@@ -92,20 +115,18 @@ class ChatFunctionalityTest {
             TestResponses.GREETING_RESPONSE,
             substring = true,
         ).assertExists()
+        }
     }
 
     
     @Test
     fun chatScreen_displaysNewConversationIcon() {
-        // Arrange
-        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
-        val viewModel = ChatViewModel(mockService)
-
         // Act
         composeTestRule.setContent {
             ChatScreen(
                 chatViewModel = viewModel,
                 onPreferencesClick = {},
+                onOpenConversationsClick = {},
             )
         }
 
@@ -124,15 +145,12 @@ class ChatFunctionalityTest {
 
     @Test
     fun chatScreen_displaysCopyIcon() {
-        // Arrange
-        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
-        val viewModel = ChatViewModel(mockService)
-
         // Act
         composeTestRule.setContent {
             ChatScreen(
                 chatViewModel = viewModel,
                 onPreferencesClick = {},
+                onOpenConversationsClick = {},
             )
         }
 
@@ -172,15 +190,12 @@ class ChatFunctionalityTest {
 
     @Test
     fun chatScreen_copiesConversationToClipboard() {
-        // Arrange
-        val mockService = MockAIService(MockAIService.ResponseMode.SUCCESS)
-        val viewModel = ChatViewModel(mockService)
-
         // Act
         composeTestRule.setContent {
             ChatScreen(
                 chatViewModel = viewModel,
                 onPreferencesClick = {},
+                onOpenConversationsClick = {},
             )
         }
 

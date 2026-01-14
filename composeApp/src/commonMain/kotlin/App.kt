@@ -64,10 +64,13 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import repo.PreferenceRepository
+import repo.ConversationRepository
+import service.AiServiceFactory
 import service.GenerativeAiService
 import ui.screen.ChatScreen
 import ui.screen.ChatViewModel
 import ui.screen.PreferencesScreen
+import ui.screen.SavedConversationScreen
 import util.isValidApiKey
 import util.rememberClipboardManager
 
@@ -76,7 +79,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import kotlinx.coroutines.flow.map
 import androidx.compose.ui.Alignment
 
-enum class Screen { Chat, Preferences }
+enum class Screen { Chat, Preferences, SavedConversations }
 
 private sealed interface ApiKeyState {
     data object Loading : ApiKeyState
@@ -87,13 +90,19 @@ private sealed interface ApiKeyState {
  * Entry point of application
  */
 @Composable
-fun App(repository: PreferenceRepository) {
+fun App(
+    preferenceRepository: PreferenceRepository,
+    conversationRepository: ConversationRepository,
+    aiServiceFactory: AiServiceFactory = AiServiceFactory { key, model ->
+        GenerativeAiService(key, model)
+    }
+) {
     MaterialTheme {
-        val apiKeyState by remember(repository) {
-            repository.apiKey.map { ApiKeyState.Loaded(it) }
+        val apiKeyState by remember(preferenceRepository) {
+            preferenceRepository.apiKey.map { ApiKeyState.Loaded(it) }
         }.collectAsState(initial = ApiKeyState.Loading)
 
-        val model by repository.model.collectAsState("gemini-2.5-flash")
+        val model by preferenceRepository.model.collectAsState("gemini-2.5-flash")
 
         var currentScreen by remember { mutableStateOf(Screen.Chat) }
 
@@ -110,25 +119,33 @@ fun App(repository: PreferenceRepository) {
             is ApiKeyState.Loaded -> {
                 val apiKey = state.key
                 if (apiKey.isNullOrBlank()) {
-                    SetApiKeyDialog(repository)
+                    SetApiKeyDialog(preferenceRepository)
                 } else {
                     // Re-create ViewModel when key or model changes
-                    key(apiKey, model) {
-                        val chatViewModel = remember {
-                            ChatViewModel(GenerativeAiService(apiKey, model))
-                        }
+                    val chatViewModel = remember {
+                        ChatViewModel(
+                            preferenceRepository = preferenceRepository,
+                            conversationRepository = conversationRepository,
+                            aiServiceFactory = aiServiceFactory,
+                        )
+                    }
 
-                        when (currentScreen) {
-                            Screen.Chat -> ChatScreen(
-                                chatViewModel = chatViewModel,
-                                onPreferencesClick = { currentScreen = Screen.Preferences },
-                            )
+                    when (currentScreen) {
+                        Screen.Chat -> ChatScreen(
+                            chatViewModel = chatViewModel,
+                            onPreferencesClick = { currentScreen = Screen.Preferences },
+                            onOpenConversationsClick = { currentScreen = Screen.SavedConversations },
+                        )
 
-                            Screen.Preferences -> PreferencesScreen(
-                                repository = repository,
-                                onBack = { currentScreen = Screen.Chat },
-                            )
-                        }
+                        Screen.Preferences -> PreferencesScreen(
+                            repository = preferenceRepository,
+                            onBack = { currentScreen = Screen.Chat },
+                        )
+
+                        Screen.SavedConversations -> SavedConversationScreen(
+                            chatViewModel = chatViewModel,
+                            onBack = { currentScreen = Screen.Chat },
+                        )
                     }
                 }
             }

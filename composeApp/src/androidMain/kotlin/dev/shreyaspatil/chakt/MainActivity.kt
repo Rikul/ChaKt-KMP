@@ -38,11 +38,12 @@ class MainActivity : ComponentActivity() {
 
         val driver = DriverFactory(applicationContext).createDriver()
         val db = ChaKtDb(driver)
-        val repository = PreferenceRepository(db)
+        val preferenceRepository = PreferenceRepository(db)
+        val conversationRepository = repo.ConversationRepository(db)
 
         window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
         setContent {
-            App(repository)
+            App(preferenceRepository, conversationRepository)
         }
     }
 }

@@ -45,6 +45,7 @@ import androidx.test.core.app.ApplicationProvider
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import dev.shreyaspatil.chakt.db.ChaKtDb
 import repo.PreferenceRepository
+import repo.ConversationRepository
 import kotlinx.coroutines.flow.first
 import App
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -73,13 +74,14 @@ class AppLaunchTest {
             )
             val db = ChaKtDb(driver)
             val repository = PreferenceRepository(db)
+            val conversationRepository = ConversationRepository(db)
 
             // Ensure key is cleared
             repository.saveApiKey("")
 
             // Act
             composeTestRule.setContent {
-                App(repository)
+                App(repository, conversationRepository)
             }
 
             // Verify that the API key dialog is displayed when no API key is set
@@ -115,11 +117,12 @@ class AppLaunchTest {
             )
             val db = ChaKtDb(driver)
             val repository = PreferenceRepository(db)
+            val conversationRepository = ConversationRepository(db)
             repository.saveApiKey("")
 
             // 2. Launch App
             composeTestRule.setContent {
-                App(repository)
+                App(repository, conversationRepository)
             }
             composeTestRule.waitForIdle()
 

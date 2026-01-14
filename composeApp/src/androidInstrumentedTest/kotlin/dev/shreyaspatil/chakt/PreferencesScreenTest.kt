@@ -19,6 +19,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import repo.ConversationRepository
 import repo.PreferenceRepository
 
 @RunWith(AndroidJUnit4::class)
@@ -28,6 +29,7 @@ class PreferencesScreenTest {
     val composeTestRule = createComposeRule()
 
     private lateinit var repository: PreferenceRepository
+    private lateinit var conversationRepository: ConversationRepository
 
     @Before
     fun setUp() {
@@ -40,6 +42,7 @@ class PreferencesScreenTest {
             )
             val db = ChaKtDb(driver)
             repository = PreferenceRepository(db)
+            conversationRepository = ConversationRepository(db)
 
             // Seed the database with an API key so the app starts in the Chat screen
             repository.saveApiKey("test-api-key")
@@ -50,7 +53,7 @@ class PreferencesScreenTest {
     fun navigateToPreferences_verifiesScreenContent() {
         // Launch the App composable
         composeTestRule.setContent {
-            App(repository)
+            App(repository, conversationRepository)
         }
 
         // Wait for UI to settle (handling the loading state)
@@ -82,7 +85,7 @@ class PreferencesScreenTest {
     fun apiKeyField_isEditable() {
         // Launch the App composable
         composeTestRule.setContent {
-            App(repository)
+            App(repository, conversationRepository)
         }
 
         // Wait for UI to settle
@@ -106,7 +109,7 @@ class PreferencesScreenTest {
     fun verifyModelSelectionOptions() {
         // Launch the App composable
         composeTestRule.setContent {
-            App(repository)
+            App(repository, conversationRepository)
         }
 
         // Wait for UI to settle
@@ -133,7 +136,7 @@ class PreferencesScreenTest {
     fun verifySaveButtonExists() {
         // Launch the App composable
         composeTestRule.setContent {
-            App(repository)
+            App(repository, conversationRepository)
         }
 
         // Wait for UI to settle
@@ -154,7 +157,7 @@ class PreferencesScreenTest {
         kotlinx.coroutines.runBlocking {
             // Launch the App composable
             composeTestRule.setContent {
-                App(repository)
+                App(repository, conversationRepository)
             }
 
             // Wait for UI to settle
