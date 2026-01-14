@@ -233,6 +233,11 @@ class SavedConversationsTest {
         // Assert: The message from the second conversation is no longer displayed, indicating it was replaced
         composeTestRule.onNodeWithText("Second message")
             .assertDoesNotExist()
+
+        sendMessage("Continuing first conversation")
+        composeTestRule.waitForIdle()
+        // Assert: The new message is displayed in the chat, indicating we can continue the loaded conversation
+        composeTestRule.onNodeWithText("Continuing first conversation").assertIsDisplayed()
     } 
 
     @Test
